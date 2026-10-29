@@ -25,6 +25,30 @@ final class LibraryApps {
 
     private LibraryApps() { }
 
+    /** Launcher settings' "show all installed apps" switch (config.xml show_all_apps is its default). */
+    static final String KEY_SHOW_ALL = "show_all_apps";
+
+    /**
+     * Whether Home lists every installed app that can be opened, phone-only apps included, and not only the apps
+     * with a TV entry point. What the owner hides stays hidden either way (see {@link #setHidden}).
+     */
+    static boolean showAll(Context context) {
+        return context.getSharedPreferences(Config.SETTINGS_NAME, Context.MODE_PRIVATE)
+                .getBoolean(KEY_SHOW_ALL, context.getResources().getBoolean(R.bool.show_all_apps));
+    }
+
+    /** Hides an app from Home (or shows it again) without touching the library's added shortcuts. */
+    static boolean setHidden(Context context, String pkg, boolean hidden) {
+        Set<String> removed;
+        try {
+            removed = readStrict(store(context, true));
+        } catch (IOException | RuntimeException e) {
+            Log.w("TvHome.Library", "Keeping unreadable hidden-app choices unchanged", e);
+            return false;
+        }
+        return write(store(context, true), removed, pkg, hidden);
+    }
+
     private static AtomicFile store(Context context, boolean removed) {
         return new AtomicFile(new File(context.getFilesDir(), removed ? "library_home_removed.txt" : "library_apps.txt"));
     }

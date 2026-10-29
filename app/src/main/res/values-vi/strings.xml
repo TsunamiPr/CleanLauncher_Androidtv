@@ -143,4 +143,15 @@
     <string name="wallpaper_pick_device">Chọn ảnh từ thiết bị…</string>
     <string name="wallpaper_pick_missing">TV không có trình chọn tệp. Hãy chép ảnh vào %1$s.</string>
     <string name="wallpaper_pick_failed">Không đọc được ảnh này</string>
+
+    <string name="tile_border_label">Viền ô ứng dụng</string>
+    <string name="border_none">Không</string>
+    <string name="border_thin">Mỏng</string>
+    <string name="border_thick">Dày</string>
+    <string name="tile_gloss_label">Hiệu ứng gương</string>
+    <string name="show_all_state">Hiện tất cả ứng dụng đã cài: %1$s</string>
+    <string name="show_all_hint">Bật: hiện mọi ứng dụng mở được, kể cả ứng dụng điện thoại. Tắt: chỉ hiện ứng dụng dành cho TV.</string>
+    <string name="hidden_apps_label">Ẩn hoặc hiện ứng dụng…</string>
+    <string name="hidden_apps_title">Ứng dụng hiện trên màn hình chính</string>
+    <string name="tile_hide">Ẩn ứng dụng</string>
 </resources>

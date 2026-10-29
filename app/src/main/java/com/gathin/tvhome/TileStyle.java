@@ -13,14 +13,17 @@ final class TileStyle {
     static final int SHAPE_WIDE = 0, SHAPE_CLASSIC = 1, SHAPE_SQUARE = 2, SHAPE_CIRCLE = 3;
     static final int CORNER_SMALL = 0, CORNER_MEDIUM = 1, CORNER_LARGE = 2;
     static final int ICON_NORMAL = 0, ICON_LARGE = 1, ICON_FILL = 2;
+    static final int BORDER_NONE = 0, BORDER_THIN = 1, BORDER_THICK = 2;
 
     static final String KEY_SHAPE = "tile_shape";
     static final String KEY_CORNER = "tile_corner";
     static final String KEY_ICON_ONLY = "tile_icon_only";
     static final String KEY_ICON_ZOOM = "tile_icon_zoom";
+    static final String KEY_BORDER = "tile_border";
+    static final String KEY_GLOSS = "tile_gloss";
 
     /** The original look. */
-    static final TileStyle DEFAULT = new TileStyle(SHAPE_WIDE, CORNER_MEDIUM, false, ICON_NORMAL);
+    static final TileStyle DEFAULT = new TileStyle(SHAPE_WIDE, CORNER_MEDIUM, false, ICON_NORMAL);   // with the thin mirror border
 
     /** The style Home was built with; set once in MainActivity.onCreate, read by AppAdapter and the dock. */
     static TileStyle current = DEFAULT;
@@ -32,7 +35,18 @@ final class TileStyle {
     /** ICON_NORMAL, ICON_LARGE or ICON_FILL (the icon grows until it fills the tile shape). */
     final int iconZoom;
 
+    /** A rim around every tile (BORDER_*), so artwork that melts into the background still has an edge. */
+    final int border;
+    /** A soft white sheen over the top of each tile, like a mirror. */
+    final boolean gloss;
+
     TileStyle(int shape, int corner, boolean iconOnly, int iconZoom) {
+        this(shape, corner, iconOnly, iconZoom, BORDER_THIN, true);
+    }
+
+    TileStyle(int shape, int corner, boolean iconOnly, int iconZoom, int border, boolean gloss) {
+        this.border = clamp(border, BORDER_NONE, BORDER_THICK, BORDER_THIN);
+        this.gloss = gloss;
         this.shape = clamp(shape, SHAPE_WIDE, SHAPE_CIRCLE, SHAPE_WIDE);
         this.corner = clamp(corner, CORNER_SMALL, CORNER_LARGE, CORNER_MEDIUM);
         this.iconOnly = iconOnly;
@@ -46,8 +60,21 @@ final class TileStyle {
     static TileStyle load(Context ctx) {
         SharedPreferences p = ctx.getSharedPreferences(Config.SETTINGS_NAME, Context.MODE_PRIVATE);
         return new TileStyle(p.getInt(KEY_SHAPE, SHAPE_WIDE), p.getInt(KEY_CORNER, CORNER_MEDIUM),
-                p.getBoolean(KEY_ICON_ONLY, false), p.getInt(KEY_ICON_ZOOM, ICON_NORMAL));
+                p.getBoolean(KEY_ICON_ONLY, false), p.getInt(KEY_ICON_ZOOM, ICON_NORMAL),
+                p.getInt(KEY_BORDER, BORDER_THIN), p.getBoolean(KEY_GLOSS, true));
     }
+
+    TileStyle withShape(int v) { return new TileStyle(v, corner, iconOnly, iconZoom, border, gloss); }
+
+    TileStyle withCorner(int v) { return new TileStyle(shape, v, iconOnly, iconZoom, border, gloss); }
+
+    TileStyle withIconOnly(boolean v) { return new TileStyle(shape, corner, v, iconZoom, border, gloss); }
+
+    TileStyle withIconZoom(int v) { return new TileStyle(shape, corner, iconOnly, v, border, gloss); }
+
+    TileStyle withBorder(int v) { return new TileStyle(shape, corner, iconOnly, iconZoom, v, gloss); }
+
+    TileStyle withGloss(boolean v) { return new TileStyle(shape, corner, iconOnly, iconZoom, border, v); }
 
     /** Design width of a tile in dp; tiles shrink from here when the columns do not fit. */
     float designWidthDp() {

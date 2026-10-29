@@ -6,6 +6,11 @@ Launcher tách từ dự án *cleanyourtv* (thư mục `launcher/`), giao diện
 2. **Chọn hình nền từ máy**: Cài đặt launcher → Hình nền → *Chọn ảnh từ thiết bị…* (ảnh được thu nhỏ ≤ 1920 px và lưu trong bộ nhớ của launcher, giữ 12 ảnh gần nhất).
 3. **Hình dạng và icon**: hình dạng ô (16:9 / 4:3 / vuông / tròn), độ bo góc, nội dung ô (banner hoặc chỉ icon), kích thước icon (bình thường / lớn / **lấp đầy hình dạng**).
 
+4. **Viền gương quanh ô app**: Cài đặt launcher → Viền ô ứng dụng (không / mỏng / dày) và Hiệu ứng gương (bật / tắt). Mặc định bật viền mỏng.
+5. **Hiện tất cả app đã cài**: mặc định hiện cả app chỉ có icon điện thoại (launcher gốc chỉ hiện app dành cho TV). Giữ OK vào một ô → *Ẩn ứng dụng*. Muốn hiện lại: Cài đặt launcher → *Ẩn hoặc hiện ứng dụng…* và tick lại. Có thể tắt "Hiện tất cả ứng dụng đã cài" để về hành vi gốc.
+
+Giữ OK vào một ô còn có *Thêm vào dock / Thay bằng app khác* và *Di chuyển* để chọn app nằm trên dock.
+
 ## Mở Cài đặt launcher
 Trên Home, giữ OK (hoặc bấm giữ) vào nút **Cài đặt** ở thanh trên → chọn *Cài đặt launcher*.
 Mọi lựa chọn áp dụng ngay khi quay lại Home. *Theo theme* sẽ xóa các lựa chọn về mặc định.

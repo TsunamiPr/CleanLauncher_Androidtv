@@ -29,9 +29,11 @@
 
     <!-- Apps never shown as tiles (e.g. the Live TV app, which the Inputs menu already covers). -->
     <string-array name="hidden_apps">
-        <item>com.mediatek.wwtv.tvcenter</item>
-        <item>com.mitv.gallery</item>
     </string-array>
+    <!-- Custom build: every installed app that can be opened is shown, TV apps and phone-only apps alike, instead of
+         only the apps with a TV entry point. Hide the ones you do not want with hold OK > Hide app, or from Launcher
+         settings > Hide or show apps. Launcher settings can switch this off (it then follows this value). -->
+    <bool name="show_all_apps">true</bool>
 
     <!-- The TV's Live TV / tuner app, offered at the end of the Inputs menu. Leave empty to omit. -->
     <string name="live_tv_package" translatable="false">com.mediatek.wwtv.tvcenter</string>
@@ -360,7 +362,7 @@
     <!-- Hold OK on a tile opens a small menu: Move (picks the tile up for reordering), Remove from Home (only with
          app_library) and App info. false keeps the old behaviour: holding OK opens the app's App info page.
          Can also be set with "tile_menu": true in a theme's config.json. -->
-    <bool name="tile_menu">false</bool>
+    <bool name="tile_menu">true</bool>
 
     <!-- Grid rows left visible under the dock on the home screen. 0 = dock sits at the very bottom. Tiles shrink if
          the dock, its title and this many rows would not otherwise fit the screen height. -->

@@ -39,6 +39,9 @@ public final class LauncherSettingsActivity extends Activity {
     private final TextView[] cornerChoices = new TextView[3];
     private final TextView[] contentChoices = new TextView[2];
     private final TextView[] zoomChoices = new TextView[3];
+    private final TextView[] borderChoices = new TextView[3];
+    private final TextView[] glossChoices = new TextView[2];
+    private TextView showAllChoice;
     private TileStyle style;
     private static final int REQUEST_PICK_WALLPAPER = 4107;
     private TextView wallpaperChoice;
@@ -112,7 +115,7 @@ public final class LauncherSettingsActivity extends Activity {
             final int value = i;
             shapeChoices[i] = findViewById(shapeIds[i]);
             shapeChoices[i].setOnClickListener(v -> {
-                if (style.shape != value) saveStyle(new TileStyle(value, style.corner, style.iconOnly, style.iconZoom));
+                if (style.shape != value) saveStyle(style.withShape(value));
             });
         }
         int[] cornerIds = {R.id.corner0, R.id.corner1, R.id.corner2};
@@ -120,7 +123,7 @@ public final class LauncherSettingsActivity extends Activity {
             final int value = i;
             cornerChoices[i] = findViewById(cornerIds[i]);
             cornerChoices[i].setOnClickListener(v -> {
-                if (style.corner != value) saveStyle(new TileStyle(style.shape, value, style.iconOnly, style.iconZoom));
+                if (style.corner != value) saveStyle(style.withCorner(value));
             });
         }
         int[] contentIds = {R.id.content0, R.id.content1};
@@ -128,7 +131,7 @@ public final class LauncherSettingsActivity extends Activity {
             final boolean iconOnly = i == 1;
             contentChoices[i] = findViewById(contentIds[i]);
             contentChoices[i].setOnClickListener(v -> {
-                if (style.iconOnly != iconOnly) saveStyle(new TileStyle(style.shape, style.corner, iconOnly, style.iconZoom));
+                if (style.iconOnly != iconOnly) saveStyle(style.withIconOnly(iconOnly));
             });
         }
         int[] zoomIds = {R.id.zoom0, R.id.zoom1, R.id.zoom2};
@@ -136,9 +139,32 @@ public final class LauncherSettingsActivity extends Activity {
             final int value = i;
             zoomChoices[i] = findViewById(zoomIds[i]);
             zoomChoices[i].setOnClickListener(v -> {
-                if (style.iconZoom != value) saveStyle(new TileStyle(style.shape, style.corner, style.iconOnly, value));
+                if (style.iconZoom != value) saveStyle(style.withIconZoom(value));
             });
         }
+        int[] borderIds = {R.id.border0, R.id.border1, R.id.border2};
+        for (int i = 0; i < borderIds.length; i++) {
+            final int value = i;
+            borderChoices[i] = findViewById(borderIds[i]);
+            borderChoices[i].setOnClickListener(v -> {
+                if (style.border != value) saveStyle(style.withBorder(value));
+            });
+        }
+        int[] glossIds = {R.id.gloss0, R.id.gloss1};
+        for (int i = 0; i < glossIds.length; i++) {
+            final boolean gloss = i == 1;
+            glossChoices[i] = findViewById(glossIds[i]);
+            glossChoices[i].setOnClickListener(v -> {
+                if (style.gloss != gloss) saveStyle(style.withGloss(gloss));
+            });
+        }
+        showAllChoice = findViewById(R.id.showAllChoice);
+        showAllChoice.setOnClickListener(v -> {
+            choices.edit().putBoolean(LibraryApps.KEY_SHOW_ALL, !LibraryApps.showAll(this)).apply();
+            changed();
+            refresh();
+        });
+        findViewById(R.id.hiddenAppsChoice).setOnClickListener(v -> showAppVisibilityPicker());
         // Mirror text alignment without globally opting the launcher into RTL. Numeric rows
         // still need explicit ordering in Android's no-supportsRtl compatibility mode.
         if (getResources().getBoolean(R.bool.rtl_menu_bar))
@@ -184,7 +210,8 @@ public final class LauncherSettingsActivity extends Activity {
                     .remove("advanced_effects").remove(Config.WALLPAPER_CHOICE_KEY)
                     .remove(Config.DOCK_OPACITY_KEY).remove(OpenOnStart.KEY)
                     .remove(TileStyle.KEY_SHAPE).remove(TileStyle.KEY_CORNER).remove(TileStyle.KEY_ICON_ONLY)
-                    .remove(TileStyle.KEY_ICON_ZOOM).commit();
+                    .remove(TileStyle.KEY_ICON_ZOOM).remove(TileStyle.KEY_BORDER).remove(TileStyle.KEY_GLOSS)
+                    .remove(LibraryApps.KEY_SHOW_ALL).commit();
             style = TileStyle.load(this);
             Config current = Config.load(this);
             columns = current.columns;
@@ -302,6 +329,46 @@ public final class LauncherSettingsActivity extends Activity {
                 : "\u2605 " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(new Date(when));
     }
 
+    /**
+     * Every app the TV can open, by name, with a tick for the ones Home shows. A change is saved at once and
+     * Home rebuilds when settings close. Hidden apps are the owner's list (LibraryApps), kept apart from the theme's.
+     */
+    private void showAppVisibilityPicker() {
+        PackageManager pm = getPackageManager();
+        java.util.Map<String, String> labels = new java.util.HashMap<>();
+        Intent[] queries = {
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER),
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)};
+        for (Intent query : queries) {
+            for (ResolveInfo r : pm.queryIntentActivities(query, 0)) {
+                String pkg = r.activityInfo.packageName;
+                if (pkg.equals(getPackageName()) || labels.containsKey(pkg)) continue;
+                labels.put(pkg, String.valueOf(r.loadLabel(pm)));
+            }
+        }
+        List<String> packages = new ArrayList<>(labels.keySet());
+        Collections.sort(packages, (a, b) -> labels.get(a).compareToIgnoreCase(labels.get(b)));
+        java.util.Set<String> hidden = LibraryApps.loadRemoved(this);
+        String[] names = new String[packages.size()];
+        boolean[] shown = new boolean[packages.size()];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = labels.get(packages.get(i));
+            shown[i] = !hidden.contains(packages.get(i));
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.hidden_apps_title)
+                .setMultiChoiceItems(names, shown, (dialog, which, checked) -> {
+                    if (LibraryApps.setHidden(this, packages.get(which), !checked)) {
+                        changed();
+                    } else {
+                        ((AlertDialog) dialog).getListView().setItemChecked(which, !checked);
+                        Toast.makeText(this, R.string.library_save_failed, Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
     /** Off, then every app with a TV entry point by name. Saved at once; it is read on the next boot. */
     private void showOpenOnStartPicker() {
         PackageManager pm = getPackageManager();
@@ -372,7 +439,8 @@ public final class LauncherSettingsActivity extends Activity {
     private void saveStyle(TileStyle next) {
         style = next;
         choices.edit().putInt(TileStyle.KEY_SHAPE, next.shape).putInt(TileStyle.KEY_CORNER, next.corner)
-                .putBoolean(TileStyle.KEY_ICON_ONLY, next.iconOnly).putInt(TileStyle.KEY_ICON_ZOOM, next.iconZoom).apply();
+                .putBoolean(TileStyle.KEY_ICON_ONLY, next.iconOnly).putInt(TileStyle.KEY_ICON_ZOOM, next.iconZoom)
+                .putInt(TileStyle.KEY_BORDER, next.border).putBoolean(TileStyle.KEY_GLOSS, next.gloss).apply();
         changed();
         refresh();
     }
@@ -396,6 +464,11 @@ public final class LauncherSettingsActivity extends Activity {
         contentChoices[0].setSelected(!style.iconOnly);
         contentChoices[1].setSelected(style.iconOnly);
         for (int i = 0; i < zoomChoices.length; i++) zoomChoices[i].setSelected(style.iconZoom == i);
+        for (int i = 0; i < borderChoices.length; i++) borderChoices[i].setSelected(style.border == i);
+        glossChoices[0].setSelected(!style.gloss);
+        glossChoices[1].setSelected(style.gloss);
+        showAllChoice.setText(getString(R.string.show_all_state,
+                getString(LibraryApps.showAll(this) ? R.string.on : R.string.off)));
         for (int i = 0; i < rowChoices.length; i++) {
             rowChoices[i].setSelected(rowsBelowDock == i);
         }
@@ -423,7 +496,8 @@ public final class LauncherSettingsActivity extends Activity {
                 || choices.contains(Config.WALLPAPER_CHOICE_KEY) || choices.contains(Config.DOCK_OPACITY_KEY)
                 || choices.contains(OpenOnStart.KEY) || choices.contains(TileStyle.KEY_SHAPE)
                 || choices.contains(TileStyle.KEY_CORNER) || choices.contains(TileStyle.KEY_ICON_ONLY)
-                || choices.contains(TileStyle.KEY_ICON_ZOOM);
+                || choices.contains(TileStyle.KEY_ICON_ZOOM) || choices.contains(TileStyle.KEY_BORDER)
+                || choices.contains(TileStyle.KEY_GLOSS) || choices.contains(LibraryApps.KEY_SHOW_ALL);
     }
 
     private void open(Intent intent) {

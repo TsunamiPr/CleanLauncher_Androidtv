@@ -3519,7 +3519,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             pickUp(at);
             Toast.makeText(this, R.string.reorder_hint, Toast.LENGTH_LONG).show();
         });
-        if (appLibraryEnabled) addSettingsMenuRow(rows, popup, R.string.library_remove_shortcut, () -> {
+        // Hide app: the owner's own choice, kept apart from the theme's hidden_apps; Settings > Hide or show apps undoes it.
+        addSettingsMenuRow(rows, popup, appLibraryEnabled ? R.string.library_remove_shortcut : R.string.tile_hide, () -> {
             if (LibraryApps.save(this, pkg, false)) reloadApps(false);
             else Toast.makeText(this, R.string.library_save_failed, Toast.LENGTH_LONG).show();
         });

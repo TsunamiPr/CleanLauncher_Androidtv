@@ -101,4 +101,24 @@ public class TileStyleTest {
         assertEquals(-1L, WallpaperImport.savedAt("pick_abc.jpg"));
         assertEquals(-1L, WallpaperImport.savedAt(null));
     }
+
+    @Test public void defaultHasAThinMirrorBorder() {
+        assertEquals(TileStyle.BORDER_THIN, TileStyle.DEFAULT.border);
+        assertTrue(TileStyle.DEFAULT.gloss);
+    }
+
+    @Test public void withMethodsChangeOnlyTheirOwnChoice() {
+        TileStyle s = TileStyle.DEFAULT.withShape(TileStyle.SHAPE_CIRCLE).withBorder(TileStyle.BORDER_THICK).withGloss(false);
+        assertEquals(TileStyle.SHAPE_CIRCLE, s.shape);
+        assertEquals(TileStyle.BORDER_THICK, s.border);
+        assertFalse(s.gloss);
+        assertEquals(TileStyle.CORNER_MEDIUM, s.corner);
+        assertFalse(s.iconOnly);
+        assertEquals(TileStyle.ICON_NORMAL, s.iconZoom);
+        assertEquals(TileStyle.BORDER_THIN, new TileStyle(0, 1, false, 0, 9, true).border);
+    }
+
+    @Test public void noBorderAndNoShineDrawsNothing() {
+        assertEquals(null, TileBorder.create(TileStyle.DEFAULT.withBorder(TileStyle.BORDER_NONE).withGloss(false), D));
+    }
 }

@@ -228,6 +228,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final float iconShare;
     /** Icon tiles (all of them with uniform_tiles, or the ones with no banner) sit on a tinted card, no caption inside. */
     private final boolean iconCards;
+    /** Every installed app that can be opened is a tile, not only the ones with a TV entry point (LibraryApps.showAll). */
+    private final boolean showAll;
     /** Packages drawn from their icon and name even when they have a banner (config.xml icon_tiles). */
     private final Set<String> iconTiles;
     private final List<Entry> items = new ArrayList<>();
@@ -262,6 +264,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.iconZoom = style.iconZoom;
         this.iconShare = style.iconShare();
         this.iconCards = this.uniformTiles || style.bigIcons();
+        this.showAll = LibraryApps.showAll(ctx);
         // Tiles keep their identity across reload(), so a focused tile stays on its app instead of
         // its view being rebound to whatever app now sits in that slot.
         setHasStableIds(true);
@@ -283,11 +286,11 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Set<String> added = new HashSet<>(LibraryApps.load(ctx));
         added.addAll(libraryPreload);
         Set<String> removed = LibraryApps.loadRemoved(ctx);
-        if (!added.isEmpty()) {
+        if (showAll || !added.isEmpty()) {
             Set<String> seen = new HashSet<>(tvPackages);
             for (ResolveInfo ri : pm.queryIntentActivities(
                     new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)) {
-                if (ri.activityInfo != null && added.contains(ri.activityInfo.packageName)
+                if (ri.activityInfo != null && (showAll || added.contains(ri.activityInfo.packageName))
                         && seen.add(ri.activityInfo.packageName)) found.add(ri);
             }
         }
@@ -301,7 +304,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (ri.activityInfo == null) continue;
             String pkg = ri.activityInfo.packageName;
             if (pkg.equals(ctx.getPackageName()) || !ri.activityInfo.exported
-                    || !LibraryApps.visible(tvPackages.contains(pkg), hidden.contains(pkg), added.contains(pkg), removed.contains(pkg))) continue;
+                    || !LibraryApps.visible(tvPackages.contains(pkg) || showAll, hidden.contains(pkg), added.contains(pkg), removed.contains(pkg))) continue;
             ComponentName component = new ComponentName(pkg, ri.activityInfo.name);
             Cards.Card card = cardByPkg.get(pkg);
             if (card != null && !card.component.equals(component)) continue;   // the card stands in for this tile
@@ -1013,6 +1016,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
             });
             card.setClipToOutline(true);
+            // Mirror rim and sheen over the artwork (Launcher settings, Tile border); null when both are off.
+            card.setForeground(TileBorder.create(TileStyle.current, density));
 
             card.setOnKeyListener((view, keyCode, event) -> {
                 if (event.getAction() != KeyEvent.ACTION_DOWN) return false;

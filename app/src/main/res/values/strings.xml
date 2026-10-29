@@ -176,4 +176,15 @@
     <string name="wallpaper_pick_device">Choose a picture from this device…</string>
     <string name="wallpaper_pick_missing">No file picker on this TV. Copy pictures into %1$s instead.</string>
     <string name="wallpaper_pick_failed">Could not read that picture</string>
+
+    <string name="tile_border_label">Tile border</string>
+    <string name="border_none">None</string>
+    <string name="border_thin">Thin</string>
+    <string name="border_thick">Thick</string>
+    <string name="tile_gloss_label">Mirror shine</string>
+    <string name="show_all_state">Show all installed apps: %1$s</string>
+    <string name="show_all_hint">On: every app that can be opened is shown, including phone apps. Off: only apps made for TV.</string>
+    <string name="hidden_apps_label">Hide or show apps…</string>
+    <string name="hidden_apps_title">Apps shown on Home</string>
+    <string name="tile_hide">Hide app</string>
 </resources>
